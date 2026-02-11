@@ -14,7 +14,7 @@ import java.util.List;
 @RequestMapping("/perros")
 public class PerroController {
     @Autowired
-    PerroService service;
+    private PerroService service;
     @PostMapping("/registro")
     public CodigoRespondDto registrarPerro(@RequestBody RegistroPerroRequestDto dto){
         return service.registrarPerro(dto);

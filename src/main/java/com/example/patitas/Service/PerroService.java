@@ -17,9 +17,9 @@ import java.util.Optional;
 @Service
 public class PerroService {
     @Autowired
-    PerroRepository repository;
+   private PerroRepository repository;
     @Autowired
-    ClienteService clienteService;
+    private ClienteService clienteService;
 
     public CodigoRespondDto registrarPerro(RegistroPerroRequestDto dto){
         CodigoRespondDto respond=new CodigoRespondDto();

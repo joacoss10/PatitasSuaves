@@ -32,8 +32,7 @@ public class RangoHorario {
     private LocalTime horaFin;
 
 
-    @Column(nullable = false)
-    private int duracion;
+
 
     @Column(nullable = false)
     @Builder.Default
@@ -55,9 +54,8 @@ public class RangoHorario {
         this.horaFin = horaFin;
     }
 
-    public void setDuracion(int duracion) {
-        this.duracion = duracion;
-    }
+
+
 
     public void setHabilitado(boolean habilitado) {
         this.habilitado = habilitado;
@@ -79,9 +77,7 @@ public class RangoHorario {
         return horaFin;
     }
 
-    public int getDuracion() {
-        return duracion;
-    }
+
 
     public boolean isHabilitado() {
         return habilitado;
