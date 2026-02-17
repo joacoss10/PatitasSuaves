@@ -1,9 +1,8 @@
 package com.example.patitas.Controller;
 
 import com.example.patitas.Dtos.CodigoRespondDto;
-import com.example.patitas.Dtos.GenerarTurnoDto;
+import com.example.patitas.Dtos.GenerarTurnoRequestDto;
 import com.example.patitas.Dtos.ServicioDto;
-import com.example.patitas.Dtos.TurnoResumenClienteDto;
 import com.example.patitas.Service.ServicioService;
 import com.example.patitas.Service.TurnoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +22,12 @@ public class TurnoController {
         return servicioService.obtenerServicios();
     }
     @PostMapping("/generarTurno")
-    public CodigoRespondDto generarTurno(@RequestBody GenerarTurnoDto dto){
-        return turnoService.generarTurno(dto);
+    public void generarTurno(@RequestBody GenerarTurnoRequestDto dto){
+        turnoService.generarTurno(dto);
+    }
+    @PostMapping("/cancelarTurno")
+    public void cancelarTurno( Long idTurno){
+         turnoService.cancelarTurno(idTurno);
     }
 
 }

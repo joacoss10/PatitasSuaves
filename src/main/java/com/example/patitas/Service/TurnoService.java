@@ -6,8 +6,12 @@ import com.example.patitas.Model.Enums.EstadoTurno;
 import com.example.patitas.Repository.ClienteRepository;
 import com.example.patitas.Repository.TurnoItemRepository;
 import com.example.patitas.Repository.TurnoRepository;
+import com.example.patitas.Util.SecurityUtils;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -17,103 +21,87 @@ import java.util.Optional;
 @Service
 public class TurnoService {
     @Autowired
-    TurnoRepository turnoRepository;
+    private TurnoRepository turnoRepository;
     @Autowired
-    TurnoItemRepository turnoItemRepository;
+    private TurnoItemRepository turnoItemRepository;
     @Autowired
-    ClienteRepository clienteRepository;
+    private ClienteRepository clienteRepository;
     @Autowired
-    PerroService perroService;
+    private PerroService perroService;
     @Autowired
-    ServicioService servicioService;
+    private ServicioService servicioService;
+    @Autowired
+    private SecurityUtils securityUtils;
 
-    public CodigoRespondDto generarTurno(GenerarTurnoDto dto) {
-        CodigoRespondDto respond = new CodigoRespondDto();
-        if (dto == null || dto.getFecha() == null || dto.getHoraIncio() == null || dto.getIdCliente() == null) {
-            respond.setCodigo(6004);
-            respond.setMensaje("Datos incompletos");
-            return respond;
-        }
-        Optional<Turno> existencia = turnoRepository.findByFechaAndHoraInicio(dto.getFecha(), dto.getHoraIncio());
-        if (existencia.isPresent() && (existencia.get().getEstado().equals(EstadoTurno.AConfirmar)||existencia.get().getEstado().equals(EstadoTurno.Confirmado))) {
-            respond.setCodigo(6001);
-            respond.setMensaje("Turno existente");
-            return respond;
-        }
-        Optional<Cliente> clienteOpt = clienteRepository.findById(dto.getIdCliente());
-        if (clienteOpt.isEmpty()) {
-            respond.setCodigo(6005);
-            respond.setMensaje("Cliente inexistente");
-            return respond;
-        }
-        Cliente cliente = clienteOpt.get();
-         List<TurnoItemDto> turnoItems = dto.getItems();
-        if (turnoItems == null || turnoItems.isEmpty()) {
-            respond.setCodigo(6006);
-            respond.setMensaje("Debe seleccionar al menos un perro");
-            return respond;
-        }
-        if (turnoItems.size() > 3) {
-            respond.setCodigo(6007);
-            respond.setMensaje("Máximo 3 perros por turno");
-            return respond;
+    @Transactional
+    public void generarTurno(GenerarTurnoRequestDto dto) {
+
+        if (dto == null || dto.getFecha() == null || dto.getHoraInicio() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Datos incompletos");
         }
 
-        double precioTotal = 0;
+        Long clienteId = securityUtils.getClienteId();
+        if (clienteId == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+
+        if (dto.getItems() == null || dto.getItems().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debe seleccionar al menos un perro");
+        }
+
+        if (dto.getItems().size() > 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Máximo 3 perros por turno");
+        }
+
+        boolean ocupado = turnoRepository
+                .existsByFechaAndHoraInicioAndEstadoIn(
+                        dto.getFecha(),
+                        dto.getHoraInicio(),
+                        List.of(EstadoTurno.AConfirmar, EstadoTurno.Confirmado)
+                );
+
+        if (ocupado) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Turno existente");
+        }
+
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
         Turno turno = new Turno();
-        turno.setHoraInicio(dto.getHoraIncio());
         turno.setFecha(dto.getFecha());
+        turno.setHoraInicio(dto.getHoraInicio());
         turno.setCliente(cliente);
         turno.setEstado(EstadoTurno.AConfirmar);
 
+        double precioTotal = 0;
         List<TurnoItem> items = new ArrayList<>();
 
+        for (GenerarTurnoItemRequestDto itemDto : dto.getItems()) {
 
-        for (TurnoItemDto turnoItemDtoAux : turnoItems) {
+            Optional<Perro> perro = perroService.perroCliente(clienteId, itemDto.getPerroId());
+            Optional<Servicio> servicio = servicioService.obtenerServico(itemDto.getServicioId());
+            if (perro.isEmpty() || servicio.isEmpty() ) {
+               throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Perro o servicio no encontrado");
+            } else if(!perro.get().isActivo()){
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Perro o servicio no encontrado");
+            }else{
+                TurnoItem item = new TurnoItem();
+                item.setTurno(turno);
+                item.setPerro(perro.get());
+                item.setServicio(servicio.get());
+                item.setPrecio(servicio.get().getPrecio());
+                item.setNotas(perro.get().getObservaciones());
+                items.add(item);
+                precioTotal += servicio.get().getPrecio();
 
-            Optional<Perro> perroOpt = perroService.obtenerPerro(turnoItemDtoAux.getPerroId());
-            Optional<Servicio> servicioOpt = servicioService.obtenerServico(turnoItemDtoAux.getServicioId());
-
-            if (perroOpt.isEmpty() || servicioOpt.isEmpty()) {
-                respond.setCodigo(6002);
-                respond.setMensaje("Perro o servicio inexistente");
-                return respond;
             }
 
-            Perro perro = perroOpt.get();
-            Servicio servicio = servicioOpt.get();
-
-
-            List<Perro> perrosDelCliente = cliente.getPerros();
-            if (perrosDelCliente == null || !perrosDelCliente.contains(perro)) {
-                respond.setCodigo(6003);
-                respond.setMensaje("El perro no pertenece al cliente seleccionado");
-                return respond;
-            }
-
-            TurnoItem turnoItem = new TurnoItem();
-            turnoItem.setServicio(servicio);
-            turnoItem.setPerro(perro);
-            turnoItem.setPrecio(servicio.getPrecio());
-            turnoItem.setNotas(perro.getObservaciones());
-
-
-            turnoItem.setTurno(turno);
-
-            items.add(turnoItem);
-            precioTotal += servicio.getPrecio();
         }
-
         turno.setItems(items);
         turno.setTotal(precioTotal);
-
         turnoRepository.save(turno);
-
-        respond.setCodigo(6000);
-        respond.setMensaje("Turno generado correctamente");
-        return respond;
     }
+
     public List<TurnoAdminDto> obtenerTurnosPendientes(){
         List<Turno> turnos=turnoRepository.findByEstado(EstadoTurno.AConfirmar);
         return mappeoTurno(turnos);
@@ -154,5 +142,10 @@ public class TurnoService {
             respond.add(respondAux);
     }
         return respond;
+    }
+    public void cancelarTurno(Long idTurno) {
+        Turno turno = turnoRepository.findByClienteIdAndId(securityUtils.getClienteId(), idTurno).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        turno.setEstado(EstadoTurno.Cancelado);
+        turnoRepository.save(turno);
     }
 }

@@ -1,6 +1,6 @@
 package com.example.patitas.Dtos;
 
-public class TurnoItemDto {
+public class GenerarTurnoItemRequestDto {
     private Long perroId;
     private Long servicioId;
 

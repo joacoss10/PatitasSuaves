@@ -69,7 +69,7 @@ public class LoginService {
             return res;
         }
 
-        String token = jwtUtil.generarToken(c.getEmail(), c.getRole().name());
+        String token = jwtUtil.generarToken(c.getId(),c.getEmail(), c.getRole().name());
 
         res.setCodigo(2001);
         res.setMensaje("Inicio exitoso");

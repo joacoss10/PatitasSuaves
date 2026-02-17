@@ -1,17 +1,9 @@
 package com.example.patitas.Dtos;
 
 public class ModificacionDatosClienteRequestDto {
-    private long idCliente;
+
     private String telefono;
     private String nombre;
-
-    public long getIdCliente() {
-        return idCliente;
-    }
-
-    public void setIdCliente(long idCliente) {
-        this.idCliente = idCliente;
-    }
 
     public String getTelefono() {
         return telefono;

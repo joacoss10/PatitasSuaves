@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface PerroRepository extends JpaRepository<Perro, Long> {
     Optional<Perro> findByNombreAndCliente_id(String nombre, Long duenio);
     List<Perro>findByCliente_id(Long duenio);
+    Optional<Perro>findByIdAndCliente_id(Long idPerro,Long idCliente);
 
 
 }

@@ -7,8 +7,11 @@ import com.example.patitas.Dtos.RegistroPerroRequestDto;
 import com.example.patitas.Model.Cliente;
 import com.example.patitas.Model.Perro;
 import com.example.patitas.Repository.PerroRepository;
+import com.example.patitas.Util.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,10 +23,12 @@ public class PerroService {
    private PerroRepository repository;
     @Autowired
     private ClienteService clienteService;
+    @Autowired
+    private SecurityUtils securityUtils;
 
     public CodigoRespondDto registrarPerro(RegistroPerroRequestDto dto){
         CodigoRespondDto respond=new CodigoRespondDto();
-        Optional<Cliente>clienteOptional=clienteService.encontrarCliente(dto.getIdCliente());
+        Optional<Cliente>clienteOptional=clienteService.encontrarCliente(securityUtils.getClienteId());
         if (clienteOptional.isPresent()){
             Optional<Perro> perroOptional=repository.findByNombreAndCliente_id(dto.getNombre(), clienteOptional.get().getId());
             if (perroOptional.isEmpty()) {
@@ -53,8 +58,8 @@ public class PerroService {
         }
         return respond;
     }
-    public List<MisPerrosRespondDto>obtenerPerrosCliente(Long idCliente){
-        Optional<Cliente>clienteOptional=clienteService.encontrarCliente(idCliente);
+    public List<MisPerrosRespondDto>obtenerPerrosCliente(){
+        Optional<Cliente>clienteOptional=clienteService.encontrarCliente(securityUtils.getClienteId());
         List<Perro>perroList=new ArrayList<>();
         List<MisPerrosRespondDto> respondDtoLis=new ArrayList<>();
         if(clienteOptional.isPresent()){
@@ -72,15 +77,17 @@ public class PerroService {
         }
        return respondDtoLis;
     }
-    public void eliminarPerro(Long id){
-        Optional<Perro> perro=repository.findById(id);
-        if(perro.isPresent()){
-            perro.get().setActivo(false);
-            repository.save(perro.get());
-        }
+    public void eliminarPerro(Long idPerro){
+        Perro perro = repository.findByIdAndCliente_id(idPerro, securityUtils.getClienteId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        perro.setActivo(false);
+        repository.save(perro);
+
     }
     public Optional<Perro> obtenerPerro(Long id){
         return repository.findById(id);
+    }
+    public Optional<Perro>perroCliente(Long idClinete, Long idPerro){
+        return repository.findByIdAndCliente_id(idPerro,idClinete);
     }
 
 }
