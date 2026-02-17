@@ -11,10 +11,7 @@ import java.util.List;
 
 @Entity
 @Table(
-        name = "turnos",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_turno_fecha_hora", columnNames = {"fecha", "hora_inicio"})
-        }
+        name = "turnos"
 )
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
@@ -39,7 +36,7 @@ public class Turno {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
-    private EstadoTurno estado = EstadoTurno.PendienteDePago;
+    private EstadoTurno estado = EstadoTurno.AConfirmar;
 
 
     private Double total;

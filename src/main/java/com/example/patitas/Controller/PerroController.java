@@ -19,10 +19,6 @@ public class PerroController {
     public CodigoRespondDto registrarPerro(@RequestBody RegistroPerroRequestDto dto){
         return service.registrarPerro(dto);
     }
-     @GetMapping("/misperros")
-    public List<MisPerrosRespondDto> obtenerPerroCliente(@RequestParam Long idCliente){
-        return service.obtenerPerrosCliente(idCliente);
-    }
     @DeleteMapping()
     public void eliminarPerro(@RequestParam Long idPerro){
         service.eliminarPerro(idPerro);

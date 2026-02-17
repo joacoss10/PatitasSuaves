@@ -25,6 +25,9 @@ public class Perro {
 
     @Column(length = 600)
     private String observaciones;
+    @Column(nullable = false)
+    private boolean activo = true;
+
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -46,6 +49,14 @@ public class Perro {
 
     public void setCliente(Cliente cliente) {
         this.cliente = cliente;
+    }
+
+    public boolean isActivo() {
+        return activo;
+    }
+
+    public void setActivo(boolean activo) {
+        this.activo = activo;
     }
 
     public String getNombre() {

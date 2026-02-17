@@ -41,8 +41,11 @@ public class DisponibilidadService {
         LocalDate desde = LocalDate.now(ZONE_AR);
         LocalDate hasta = desde.plusDays(15);
 
+        LocalDate hoy = LocalDate.now(ZONE_AR);
+        LocalTime ahora = LocalTime.now(ZONE_AR);
+
         List<EstadoTurno> estadosQueBloquean =
-                List.of(EstadoTurno.PendienteDePago, EstadoTurno.Confirmado);
+                List.of(EstadoTurno.AConfirmar, EstadoTurno.Confirmado);
 
         List<Turno> turnos =
                 turnoRepository.findByFechaBetweenAndEstadoIn(desde, hasta, estadosQueBloquean);
@@ -52,7 +55,6 @@ public class DisponibilidadService {
                         Turno::getFecha,
                         Collectors.mapping(Turno::getHoraInicio, Collectors.toSet())
                 ));
-
         List<DisponibilidadRespondDto> salida = new ArrayList<>();
 
         for (LocalDate fecha = desde; !fecha.isAfter(hasta); fecha = fecha.plusDays(1)) {
@@ -67,7 +69,6 @@ public class DisponibilidadService {
                 salida.add(disAux);
                 continue;
             }
-
             Optional<DiaAgenda> optDia = diaAgendaService.encontrarDia(diaSemanaAgenda);
 
             if (optDia.isEmpty() || !optDia.get().isHabilitado()) {
@@ -75,7 +76,6 @@ public class DisponibilidadService {
                 salida.add(disAux);
                 continue;
             }
-
             List<RangoHorario> rangos =
                     rangoHorarioRepository.findByDiaAgendaAndHabilitadoTrue(optDia.get());
 
@@ -90,7 +90,10 @@ public class DisponibilidadService {
 
                 while (!t.plusMinutes(duracionTurnoMin).isAfter(rango.getHoraFin())) {
 
-                    if (!ocupados.contains(t)) {
+                    boolean yaPaso = fecha.equals(hoy)
+                            && t.plusMinutes(duracionTurnoMin).isBefore(ahora);
+
+                    if (!ocupados.contains(t) && !yaPaso) {
                         disponibles.add(t.format(HORA_FMT));
                     }
 
@@ -102,9 +105,9 @@ public class DisponibilidadService {
             disAux.setHorario(disponibles);
             salida.add(disAux);
         }
-
         return salida;
     }
+
 
 
     public CodigoRespondDto crearDisponibilidad(Long idDiaSemana, CrearDisponibilidadRequestDto dto) {

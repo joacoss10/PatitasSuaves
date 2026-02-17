@@ -51,4 +51,7 @@ public class ServicioService {
             repository.save( servicio.get());
         }
     }
+    public Optional<Servicio>obtenerServico(Long id){
+        return repository.findById(id);
+    }
 }

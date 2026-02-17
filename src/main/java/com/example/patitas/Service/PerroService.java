@@ -26,18 +26,29 @@ public class PerroService {
         Optional<Cliente>clienteOptional=clienteService.encontrarCliente(dto.getIdCliente());
         if (clienteOptional.isPresent()){
             Optional<Perro> perroOptional=repository.findByNombreAndCliente_id(dto.getNombre(), clienteOptional.get().getId());
-            if(perroOptional.isEmpty()){
-                Perro perro=new Perro();
+            if (perroOptional.isEmpty()) {
+                Perro perro = new Perro();
                 perro.setCliente(clienteOptional.get());
                 perro.setNombre(dto.getNombre());
                 perro.setObservaciones(dto.getObservaciones());
                 perro.setTamanio(dto.getTamanioPerro());
+                perro.setActivo(true);
                 repository.save(perro);
                 respond.setCodigo(2003);
                 respond.setMensaje("Perro registrado");
-            }else{
-                respond.setCodigo(5004);
-                respond.setMensaje("Perro ya existente");
+            } else {
+                Perro perro = perroOptional.get();
+                if (!perro.isActivo()) {
+                    perro.setActivo(true);
+                    perro.setObservaciones(dto.getObservaciones());
+                    perro.setTamanio(dto.getTamanioPerro());
+                    repository.save(perro);
+                    respond.setCodigo(2004);
+                    respond.setMensaje("Perro reactivado correctamente");
+                } else {
+                    respond.setCodigo(5004);
+                    respond.setMensaje("Perro ya existente");
+                }
             }
         }
         return respond;
@@ -50,18 +61,26 @@ public class PerroService {
             perroList=repository.findByCliente_id(clienteOptional.get().getId());
         }
         for (Perro p:perroList){
+            if(p.isActivo()){
             MisPerrosRespondDto aux=new MisPerrosRespondDto();
             aux.setObservaciones(p.getObservaciones());
             aux.setTamanioPerro(p.getTamanio());
             aux.setNombre(p.getNombre());
             aux.setId(p.getId());
             respondDtoLis.add(aux);
+            }
         }
        return respondDtoLis;
     }
     public void eliminarPerro(Long id){
-        repository.deleteById(id);
+        Optional<Perro> perro=repository.findById(id);
+        if(perro.isPresent()){
+            perro.get().setActivo(false);
+            repository.save(perro.get());
+        }
     }
-
+    public Optional<Perro> obtenerPerro(Long id){
+        return repository.findById(id);
+    }
 
 }
