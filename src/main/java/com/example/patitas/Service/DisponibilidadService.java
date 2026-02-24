@@ -1,9 +1,10 @@
 package com.example.patitas.Service;
 
-import com.example.patitas.Dtos.CodigoRespondDto;
+import com.example.patitas.Dtos.TokenRespondDto;
 import com.example.patitas.Dtos.CrearDisponibilidadRequestDto;
 import com.example.patitas.Dtos.DisponibilidadRespondDto;
 import com.example.patitas.Dtos.RangosPorDiaAdminDto;
+import com.example.patitas.Exeptions.ApiException;
 import com.example.patitas.Model.DiaAgenda;
 import com.example.patitas.Model.Enums.DiaSemanaAgenda;
 import com.example.patitas.Model.Enums.EstadoTurno;
@@ -13,6 +14,7 @@ import com.example.patitas.Repository.DiaAgendaRepository;
 import com.example.patitas.Repository.RangoHorarioRepository;
 import com.example.patitas.Repository.TurnoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
@@ -110,37 +112,30 @@ public class DisponibilidadService {
 
 
 
-    public CodigoRespondDto crearDisponibilidad(Long idDiaSemana, CrearDisponibilidadRequestDto dto) {
+    public void crearDisponibilidad(Long idDiaSemana, CrearDisponibilidadRequestDto dto) {
 
-        CodigoRespondDto respondDto = new CodigoRespondDto();
+        TokenRespondDto respondDto = new TokenRespondDto();
 
         if (dto == null || dto.getHoraInicio() == null || dto.getHoraFin() == null) {
-            respondDto.setCodigo(5102);
-            respondDto.setMensaje("Horas invalidas");
-            return respondDto;
+            throw new ApiException("Horas invalidas", HttpStatus.CONFLICT);
         }
 
         LocalTime inicio = dto.getHoraInicio();
         LocalTime fin = dto.getHoraFin();
 
         if (!inicio.isBefore(fin)) {
-            respondDto.setCodigo(5102);
-            respondDto.setMensaje("Hora inicio debe ser menor a hora fin");
-            return respondDto;
+            throw new ApiException("Hora inicio debe ser menor a hora fin", HttpStatus.CONFLICT);
         }
 
         if (Duration.between(inicio, fin).toMinutes() < duracionTurnoMin) {
-            respondDto.setCodigo(5103);
-            respondDto.setMensaje("El rango debe permitir al menos un turno de 90 minutos");
-            return respondDto;
+            throw new ApiException("El rango debe permitir al menos un turno de 90 minutos",HttpStatus.CONFLICT);
+
         }
 
         Optional<DiaAgenda> optDia = diaAgendaService.encontrarDia(idDiaSemana);
 
         if (optDia.isEmpty()) {
-            respondDto.setCodigo(5101);
-            respondDto.setMensaje("Dia no encontrado");
-            return respondDto;
+            throw new ApiException("Dia no encontrado",HttpStatus.NOT_FOUND);
         }
 
         List<RangoHorario> existentes =
@@ -151,15 +146,11 @@ public class DisponibilidadService {
             if (!r.isHabilitado()) continue;
 
             if (r.getHoraInicio().equals(inicio) && r.getHoraFin().equals(fin)) {
-                respondDto.setCodigo(5105);
-                respondDto.setMensaje("El rango ya existe");
-                return respondDto;
+                throw new ApiException("Rango ya existente",HttpStatus.CONFLICT);
             }
 
             if (seSuperpone(inicio, fin, r.getHoraInicio(), r.getHoraFin())) {
-                respondDto.setCodigo(5104);
-                respondDto.setMensaje("El rango se superpone con otro rango existente");
-                return respondDto;
+                throw new ApiException("El rango se superpone con otro ya existente",HttpStatus.CONFLICT);
             }
         }
 
@@ -170,10 +161,6 @@ public class DisponibilidadService {
         nuevoRango.setHabilitado(true);
 
         rangoHorarioRepository.save(nuevoRango);
-
-        respondDto.setCodigo(2100);
-        respondDto.setMensaje("Creado con exito");
-        return respondDto;
     }
 
 

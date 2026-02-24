@@ -1,11 +1,9 @@
 package com.example.patitas.Controller;
 
-import com.example.patitas.Dtos.DatosClienteRespondDto;
-import com.example.patitas.Dtos.MisPerrosRespondDto;
-import com.example.patitas.Dtos.ModificacionDatosClienteRequestDto;
-import com.example.patitas.Dtos.TurnoClienteRespondDto;
+import com.example.patitas.Dtos.*;
 import com.example.patitas.Model.Enums.EstadoTurno;
 import com.example.patitas.Service.ClienteService;
+import com.example.patitas.Service.LoginService;
 import com.example.patitas.Service.PerroService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +17,8 @@ public class ClienteController {
    private ClienteService clienteService;
     @Autowired
     private PerroService perroService;
+    @Autowired
+    private LoginService loginService;
     @GetMapping("/datos")
     public DatosClienteRespondDto obtenerDatosCliente(){
         return clienteService.obtenerDatosCliente();
@@ -35,5 +35,9 @@ public class ClienteController {
     @GetMapping("/turnos")
     public List<TurnoClienteRespondDto> obtenerTurnosCliente(@RequestParam EstadoTurno estadoTurno){
         return clienteService.obtenerTurnosCliente(estadoTurno);
+    }
+    @PostMapping("/modificarContrasenia")
+    public void modificarContrasenia(@RequestBody OlvidoDeContraseniaRequest request){
+        loginService.cambiarContrasenia(request);
     }
 }

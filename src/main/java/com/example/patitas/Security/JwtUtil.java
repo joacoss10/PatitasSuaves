@@ -1,5 +1,6 @@
 package com.example.patitas.Security;
 
+import com.example.patitas.Model.Enums.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -18,6 +19,8 @@ public class JwtUtil {
     private String claveSecreta;
     @Value("${jwt.expiration}")
     private long expiration;
+    @Value("${jwt.expirationRestored}")
+    private long expirationRestored;
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(claveSecreta.getBytes(StandardCharsets.UTF_8));
@@ -32,6 +35,19 @@ public class JwtUtil {
                 .setSubject(alias)
                 .claim("rol", rol)
                 .claim("clienteId", clienteId)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+    public String generarTokeTemporal(String mail){
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + expirationRestored);
+
+        return Jwts.builder()
+                .setSubject(mail)
+                .claim("rol", Role.Cliente)
+                .claim("clienteId", 0L)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

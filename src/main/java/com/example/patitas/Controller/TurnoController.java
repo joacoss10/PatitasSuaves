@@ -1,6 +1,5 @@
 package com.example.patitas.Controller;
 
-import com.example.patitas.Dtos.CodigoRespondDto;
 import com.example.patitas.Dtos.GenerarTurnoRequestDto;
 import com.example.patitas.Dtos.ServicioDto;
 import com.example.patitas.Service.ServicioService;

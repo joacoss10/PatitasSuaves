@@ -46,6 +46,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String rol = jwtUtil.getRol(token);
         Long clienteId = jwtUtil.getIdCliente(token);
 
+
         SimpleGrantedAuthority authority =
                 new SimpleGrantedAuthority("ROLE_" + rol);
         UsuarioAutenticado usuario =

@@ -71,4 +71,7 @@ public class ClienteService {
         }
         return respond;
     }
+    public boolean existePorMail(String mail){
+        return repository.findByEmail(mail).isPresent();
+    }
 }

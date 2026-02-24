@@ -2,10 +2,7 @@ package com.example.patitas.Controller;
 
 import com.example.patitas.Dtos.*;
 import com.example.patitas.Model.Enums.EstadoTurno;
-import com.example.patitas.Service.DiaAgendaService;
-import com.example.patitas.Service.DisponibilidadService;
-import com.example.patitas.Service.ServicioService;
-import com.example.patitas.Service.TurnoService;
+import com.example.patitas.Service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +19,7 @@ public class AdminController {
     private DiaAgendaService diaAgendaService;
     @Autowired
     private TurnoService turnoService;
+
 
     @PostMapping("/nuevoServicio")
     public void nuevoServicio(@RequestBody NuevoServicioRequestDto dto){
@@ -40,8 +38,8 @@ public class AdminController {
         servicioService.cambiarDisponibilidad(idServicio);
     }
     @PostMapping("/crearDisponibilidad")
-    public CodigoRespondDto crearRango(@RequestParam Long idDia, @RequestBody CrearDisponibilidadRequestDto dto){
-        return disponibilidadService.crearDisponibilidad(idDia,dto);
+    public void crearRango(@RequestParam Long idDia, @RequestBody CrearDisponibilidadRequestDto dto){
+        disponibilidadService.crearDisponibilidad(idDia,dto);
     }
     @GetMapping("/estadoDias")
     public List<EstadoDiasRespondDto> obtenerEstadoDias(){
@@ -72,8 +70,7 @@ public class AdminController {
         turnoService.cambiarEstadoTurno(idTurno,EstadoTurno.Confirmado);
     }
     @PostMapping("/rechazarTurno")
-    public void rechazarTurno(@RequestParam Long idTurno){
-        turnoService.cambiarEstadoTurno(idTurno,EstadoTurno.Rechazado);
+    public void rechazarTurno(@RequestParam Long idTurno) {
+        turnoService.cambiarEstadoTurno(idTurno, EstadoTurno.Rechazado);
     }
-
 }

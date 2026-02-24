@@ -1,10 +1,12 @@
 package com.example.patitas.Service;
 
 import com.example.patitas.Dtos.EstadoDiasRespondDto;
+import com.example.patitas.Exeptions.ApiException;
 import com.example.patitas.Model.DiaAgenda;
 import com.example.patitas.Model.Enums.DiaSemanaAgenda;
 import com.example.patitas.Repository.DiaAgendaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -22,7 +24,7 @@ public class DiaAgendaService {
                  diaSemana.get().setHabilitado(false);
              }else{diaSemana.get().setHabilitado(true);}
              repository.save(diaSemana.get());
-         }
+         }else throw new ApiException("Dia no encontrado", HttpStatus.BAD_REQUEST);
     }
     public Optional<DiaAgenda> encontrarDia (Long idDia){
         return repository.findById(idDia);

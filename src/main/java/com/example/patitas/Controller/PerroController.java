@@ -1,14 +1,10 @@
 package com.example.patitas.Controller;
 
-import com.example.patitas.Dtos.CodigoRespondDto;
-import com.example.patitas.Dtos.MisPerrosRespondDto;
-import com.example.patitas.Dtos.RegisterRequestDto;
+import com.example.patitas.Dtos.TokenRespondDto;
 import com.example.patitas.Dtos.RegistroPerroRequestDto;
 import com.example.patitas.Service.PerroService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/perros")
@@ -16,8 +12,8 @@ public class PerroController {
     @Autowired
     private PerroService service;
     @PostMapping("/registro")
-    public CodigoRespondDto registrarPerro(@RequestBody RegistroPerroRequestDto dto){
-        return service.registrarPerro(dto);
+    public void registrarPerro(@RequestBody RegistroPerroRequestDto dto){
+      service.registrarPerro(dto);
     }
     @DeleteMapping()
     public void eliminarPerro(@RequestParam Long idPerro){

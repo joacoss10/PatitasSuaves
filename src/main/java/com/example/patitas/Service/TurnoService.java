@@ -1,6 +1,7 @@
 package com.example.patitas.Service;
 
 import com.example.patitas.Dtos.*;
+import com.example.patitas.Exeptions.ApiException;
 import com.example.patitas.Model.*;
 import com.example.patitas.Model.Enums.EstadoTurno;
 import com.example.patitas.Repository.ClienteRepository;
@@ -37,20 +38,20 @@ public class TurnoService {
     public void generarTurno(GenerarTurnoRequestDto dto) {
 
         if (dto == null || dto.getFecha() == null || dto.getHoraInicio() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Datos incompletos");
+            throw new ApiException("Datos incompletos", HttpStatus.BAD_REQUEST);
         }
 
         Long clienteId = securityUtils.getClienteId();
         if (clienteId == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+            throw new ApiException("Cliente vacio", HttpStatus.UNAUTHORIZED);
         }
 
         if (dto.getItems() == null || dto.getItems().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debe seleccionar al menos un perro");
+            throw new ApiException( "Debe seleccionar al menos un perro",HttpStatus.BAD_REQUEST);
         }
 
         if (dto.getItems().size() > 3) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Máximo 3 perros por turno");
+            throw new ApiException("Maximo 3 perros por turno", HttpStatus.BAD_REQUEST);
         }
 
         boolean ocupado = turnoRepository
@@ -61,11 +62,11 @@ public class TurnoService {
                 );
 
         if (ocupado) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Turno existente");
+            throw new ApiException("Turno existente", HttpStatus.CONFLICT);
         }
 
         Cliente cliente = clienteRepository.findById(clienteId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException("Cliente invalido",HttpStatus.NOT_FOUND));
 
         Turno turno = new Turno();
         turno.setFecha(dto.getFecha());
@@ -81,9 +82,10 @@ public class TurnoService {
             Optional<Perro> perro = perroService.perroCliente(clienteId, itemDto.getPerroId());
             Optional<Servicio> servicio = servicioService.obtenerServico(itemDto.getServicioId());
             if (perro.isEmpty() || servicio.isEmpty() ) {
-               throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Perro o servicio no encontrado");
+                throw new ApiException("Perro o servicio no encontrado", HttpStatus.NOT_FOUND);
+
             } else if(!perro.get().isActivo()){
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Perro o servicio no encontrado");
+                throw new ApiException("Perro o servicio no encontrado", HttpStatus.NOT_FOUND);
             }else{
                 TurnoItem item = new TurnoItem();
                 item.setTurno(turno);
@@ -144,7 +146,7 @@ public class TurnoService {
         return respond;
     }
     public void cancelarTurno(Long idTurno) {
-        Turno turno = turnoRepository.findByClienteIdAndId(securityUtils.getClienteId(), idTurno).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Turno turno = turnoRepository.findByClienteIdAndId(securityUtils.getClienteId(), idTurno).orElseThrow(() -> new ApiException("Turno no encontrado", HttpStatus.NOT_FOUND));
         turno.setEstado(EstadoTurno.Cancelado);
         turnoRepository.save(turno);
     }

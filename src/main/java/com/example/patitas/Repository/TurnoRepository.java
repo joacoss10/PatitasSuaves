@@ -48,4 +48,20 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
             @Param("hoy") LocalDate hoy,
             @Param("horaActual") LocalTime horaActual
     );
+    @Modifying
+    @Query(value = """
+                UPDATE turnos
+                SET estado = 'Rechazado'
+                WHERE estado = 'AConfirmar'
+                AND (
+                    (fecha < :hoy)
+                    OR
+                    (fecha = :hoy 
+                     AND (hora_inicio + INTERVAL '90 minutes') <= :horaActual)
+                )
+            """, nativeQuery = true)
+    int marcarTurnoRechazado(
+            @Param("hoy") LocalDate hoy,
+            @Param("horaActual") LocalTime horaActual
+    );
 }

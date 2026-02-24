@@ -1,10 +1,12 @@
 package com.example.patitas.Service;
 
 import com.example.patitas.Dtos.*;
+import com.example.patitas.Exeptions.ApiException;
 import com.example.patitas.Model.Cliente;
-import com.example.patitas.Model.Enums.Role;
 import com.example.patitas.Repository.ClienteRepository;
+import com.example.patitas.Util.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.example.patitas.Security.JwtUtil;
@@ -19,62 +21,53 @@ public class LoginService {
     private JwtUtil jwtUtil;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private SecurityUtils securityUtils;
 
-    public CodigoRespondDto registrar(RegisterRequestDto dto) {
+    public void registrar(RegisterRequestDto dto) {
         Optional<Cliente> optionalCliente = repoCliente.findByEmailOrCelular(dto.getMail(), dto.getCelular());
-        CodigoRespondDto respondDto = new CodigoRespondDto();
-
-
-
         if (optionalCliente.isEmpty()) {
             Cliente cliente = new Cliente();
             cliente.setNombre(dto.getNombre());
             cliente.setCelular(dto.getCelular());
             cliente.setEmail(dto.getMail());
             cliente.setPasswordHash(passwordEncoder.encode(dto.getContrasenia()));
-
             repoCliente.save(cliente);
 
-            respondDto.setCodigo(2000);
-            respondDto.setMensaje("Registro correcto");
         } else {
             Cliente c=optionalCliente.get();
             if(c.getEmail().equals(dto.getMail())){
-            respondDto.setCodigo(5002);
-            respondDto.setMensaje("Mail existente");
+            throw new ApiException("Mail existente",HttpStatus.CONFLICT);
         }else {
-                respondDto.setCodigo(5003);
-                respondDto.setMensaje("Numero de Celular existente");
+                throw new ApiException("Celular existente",HttpStatus.CONFLICT);
             }
         }
-
-        return respondDto;
     }
 
-    public CodigoRespondDto iniciarSesion(IncioSesionRequestDto dto) {
-        CodigoRespondDto res = new CodigoRespondDto();
+    public TokenRespondDto iniciarSesion(IncioSesionRequestDto dto) {
+        TokenRespondDto res = new TokenRespondDto();
 
         Optional<Cliente> opt = repoCliente.findByEmail(dto.getMail());
         if (opt.isEmpty()) {
-            res.setCodigo(5001);
-            res.setMensaje("Credenciales incorrectas");
-            return res;
+            throw new ApiException("Credenciales incorrectas", HttpStatus.BAD_REQUEST);
         }
 
         Cliente c = opt.get();
 
         if (!passwordEncoder.matches(dto.getContrasenia(), c.getPasswordHash())) {
-            res.setCodigo(5001);
-            res.setMensaje("Credenciales incorrectas");
-            return res;
+            throw new ApiException("Credenciales incorrectas", HttpStatus.BAD_REQUEST);
         }
 
         String token = jwtUtil.generarToken(c.getId(),c.getEmail(), c.getRole().name());
-
-        res.setCodigo(2001);
-        res.setMensaje("Inicio exitoso");
         res.setToken(token);
-        res.setUser(c.getId());
         return res;
+    }
+    public void cambiarContrasenia(OlvidoDeContraseniaRequest request){
+        String email= securityUtils.getMail();
+        Optional<Cliente> clienteOptional=repoCliente.findByEmail(email);
+        if(clienteOptional.isPresent()){
+            clienteOptional.get().setPasswordHash(passwordEncoder.encode(request.getContrasenia()));
+            repoCliente.save(clienteOptional.get());
+        }else throw new ApiException("Mail incorrecto", HttpStatus.BAD_REQUEST);
     }
 }

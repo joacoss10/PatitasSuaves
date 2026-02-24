@@ -1,9 +1,10 @@
 package com.example.patitas.Service;
 
 
-import com.example.patitas.Dtos.CodigoRespondDto;
+import com.example.patitas.Dtos.TokenRespondDto;
 import com.example.patitas.Dtos.MisPerrosRespondDto;
 import com.example.patitas.Dtos.RegistroPerroRequestDto;
+import com.example.patitas.Exeptions.ApiException;
 import com.example.patitas.Model.Cliente;
 import com.example.patitas.Model.Perro;
 import com.example.patitas.Repository.PerroRepository;
@@ -26,8 +27,8 @@ public class PerroService {
     @Autowired
     private SecurityUtils securityUtils;
 
-    public CodigoRespondDto registrarPerro(RegistroPerroRequestDto dto){
-        CodigoRespondDto respond=new CodigoRespondDto();
+    public void registrarPerro(RegistroPerroRequestDto dto){
+        TokenRespondDto respond=new TokenRespondDto();
         Optional<Cliente>clienteOptional=clienteService.encontrarCliente(securityUtils.getClienteId());
         if (clienteOptional.isPresent()){
             Optional<Perro> perroOptional=repository.findByNombreAndCliente_id(dto.getNombre(), clienteOptional.get().getId());
@@ -39,8 +40,6 @@ public class PerroService {
                 perro.setTamanio(dto.getTamanioPerro());
                 perro.setActivo(true);
                 repository.save(perro);
-                respond.setCodigo(2003);
-                respond.setMensaje("Perro registrado");
             } else {
                 Perro perro = perroOptional.get();
                 if (!perro.isActivo()) {
@@ -48,15 +47,12 @@ public class PerroService {
                     perro.setObservaciones(dto.getObservaciones());
                     perro.setTamanio(dto.getTamanioPerro());
                     repository.save(perro);
-                    respond.setCodigo(2004);
-                    respond.setMensaje("Perro reactivado correctamente");
                 } else {
-                    respond.setCodigo(5004);
-                    respond.setMensaje("Perro ya existente");
+                    repository.save(perro);
+                    throw new ApiException("Perro ya registrado",HttpStatus.CONFLICT);
                 }
             }
         }
-        return respond;
     }
     public List<MisPerrosRespondDto>obtenerPerrosCliente(){
         Optional<Cliente>clienteOptional=clienteService.encontrarCliente(securityUtils.getClienteId());
@@ -78,9 +74,12 @@ public class PerroService {
        return respondDtoLis;
     }
     public void eliminarPerro(Long idPerro){
-        Perro perro = repository.findByIdAndCliente_id(idPerro, securityUtils.getClienteId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        perro.setActivo(false);
-        repository.save(perro);
+        Optional<Perro> perro = repository.findByIdAndCliente_id(idPerro, securityUtils.getClienteId());
+        if(perro.isPresent()){
+            perro.get().setActivo(false);
+            repository.save(perro.get());
+        }else throw  new ApiException("Cliente o perro incorrcto",HttpStatus.NOT_FOUND);
+
 
     }
     public Optional<Perro> obtenerPerro(Long id){
