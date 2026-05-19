@@ -32,7 +32,6 @@ public class LoginService {
             cliente.setNombre(dto.getNombre());
             cliente.setCelular(dto.getCelular());
             cliente.setEmail(dto.getMail());
-            cliente.setRole(Role.Admin);
             cliente.setPasswordHash(passwordEncoder.encode(dto.getContrasenia()));
             repoCliente.save(cliente);
 
