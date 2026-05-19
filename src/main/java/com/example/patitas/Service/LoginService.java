@@ -3,6 +3,7 @@ package com.example.patitas.Service;
 import com.example.patitas.Dtos.*;
 import com.example.patitas.Exeptions.ApiException;
 import com.example.patitas.Model.Cliente;
+import com.example.patitas.Model.Enums.Role;
 import com.example.patitas.Repository.ClienteRepository;
 import com.example.patitas.Util.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ public class LoginService {
             cliente.setNombre(dto.getNombre());
             cliente.setCelular(dto.getCelular());
             cliente.setEmail(dto.getMail());
+            cliente.setRole(Role.Admin);
             cliente.setPasswordHash(passwordEncoder.encode(dto.getContrasenia()));
             repoCliente.save(cliente);
 
