@@ -49,7 +49,7 @@ public class GaleriaPerroService {
                 perro.getServicioRealizado(),
                 perro.getComentarios(),
                 // Construimos la URL dinámica apuntando al endpoint que crearemos abajo
-                "[https://patitassuaves-backend.onrender.com/auth/vistaGaleria/galeria/foto/](https://patitassuaves-backend.onrender.com/auth/vistaGaleria/galeria/foto/)" + perro.getId()
+                "https://patitassuaves-backend.onrender.com/auth/vistaGaleria/galeria/foto/" + perro.getId()
         )).collect(Collectors.toList());
     }
 
